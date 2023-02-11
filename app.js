@@ -9,6 +9,10 @@ const morgan = require("morgan");
 
 dotenv.config();
 
+//Importing routers
+const userRoute = require("./routes/user-routes");
+const authRoute = require("./routes/auth-routes");
+
 //Connecting to database
 mongoose.set('strictQuery', true);
 mongoose.connect(process.env.MONGO_URL, {useNewUrlParser: true, useUnifiedTopology: true}, ()=> {
@@ -22,7 +26,11 @@ app.use(helmet());
 app.use(morgan("common"));
 
 
+// Defining Routes 
+app.use("/api/users", userRoute);
+app.use("/api/auth", authRoute);
+
 //Listening at port 8000
-app.listen(8000, ()=>{
+app.listen(8800, ()=>{
     console.log("Server is Running");
 })
