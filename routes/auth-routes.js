@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
+const Token = require("../models/token");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const RefreshToken = require("../models/token")
@@ -60,7 +61,6 @@ router.post("/login", async (req, res) => {
                 );
 
                 //Save refresh token to database
-
                 const userRefreshToken = new RefreshToken({userId: user._id, token:refreshToken });
                 userRefreshToken.save();
                 res.cookie('jwt', refreshToken, {httpOnly:true, maxAge: 24 * 60 * 60 * 1000});
@@ -78,6 +78,34 @@ router.post("/login", async (req, res) => {
     }
   });
 
+//LOGOUT USER
+router.get("/logout", async (req, res) => {
+    let foundToken;
+    const cookies = req.cookies;
+    if(!cookies?.jwt) return res.sendStatus(204); //No content
+
+    const refreshToken = cookies.jwt;
+
+    //Is refresh token in db
+    try {
+        foundToken = await Token.findOne({"token": refreshToken});
+    } catch (error) {
+        console.log(error);
+    }
+    if(!foundToken){
+        res.clearCookie('jwt', {httpOnly: true});
+        return res.sendStatus(204);
+    };
+    //Delete the refresh token in database
+    try {
+        await Token.findOneAndDelete({"token": refreshToken});
+        
+    } catch (error) {
+        console.log(error);
+    }
+    res.clearCookie('jwt', {httpOnly: true});
+    return res.sendStatus(200);
+  });
 
 
 

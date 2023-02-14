@@ -1,9 +1,6 @@
 const express = require("express");
-const { verify } = require("jsonwebtoken");
 const verifyJWT = require("../middleware/verifyJWT");
-const task = require("../models/task");
 const Task = require("../models/task");
-const user = require("../models/user");
 const router = express.Router();
 
 //GET Tasks for user
@@ -33,7 +30,7 @@ router.post("/", verifyJWT, async(req,res)=>{
     //Get value of the last value in the drag and drop table of todo section
     let maxOrder;
     try{    
-    maxOrder = await Task.find({user: user, status:{$eq: "todo"} })
+    maxOrder = await Task.find({user: req.user, status:{$eq: "todo"} })
     .sort({order: -1})
     .limit(1)
     .select("order")
@@ -74,7 +71,7 @@ router.patch('/:taskId', verifyJWT, async(req, res)=> {
     let task;
     //Get current status and order of the task 
     try{
-        task = await Task.findOne({ "_id": req.params.taskId, "user": user });
+        task = await Task.findOne({ "_id": req.params.taskId, "user": req.user });
     }
     catch(error){
         console.log(error)
@@ -116,6 +113,41 @@ router.patch('/:taskId', verifyJWT, async(req, res)=> {
         console.log(error);
     }
     return res.status(200).json("Updated Successfully");
+});
+
+
+//Delete Task
+router.delete("/:taskId", verifyJWT, async(req, res)=>{
+    let task;
+    const user =req.user;
+    try {
+        task = await Task.findOne({"user": user, "_id": req.params.taskId})
+
+        //Find all the task greater than its order number in its status and decrease it by 1
+        await Task.updateMany({
+            user: user,
+            status: task.status,
+            order : {$gt: task.order}
+        }, { $inc: { order: -1 } });
+
+    }
+    catch(error){
+        console.log(error);
+    }
+    try {
+        //Now Delete Task
+        await Task.findOneAndDelete({"user": user, "_id": req.params.taskId})
+
+    } catch (error) {
+        console.log(error);
+    }
+    
+
+    if(!task){
+        return res.status(404).json("No task found")
+    }
+    return res.status(200).json("Task Deleted Successfully");
+
 });
 
 
