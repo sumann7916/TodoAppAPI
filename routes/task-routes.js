@@ -1,6 +1,7 @@
 const express = require("express");
 const verifyJWT = require("../middleware/verifyJWT");
 const Task = require("../models/task");
+const mongoose = require("mongoose");
 const router = express.Router();
 
 //GET Tasks for user
