@@ -1,12 +1,13 @@
 const express = require("express");
 const User = require("../models/user");
+const verifyJWT = require("../middleware/verifyJWT")
 const bcrypt = require("bcrypt");
 const router = express.Router();
 
 
 //update Users
-router.put("/:id", async(req, res)=>{
-    if (req.body.userId === req.params.id) {
+router.put("/:id",verifyJWT, async(req, res)=>{
+    if (req.user === req.params.id) {
 
         //If user wants to update password
         if(req.body.password) {
@@ -36,8 +37,8 @@ router.put("/:id", async(req, res)=>{
 
 //delete user
 
-router.delete("/:id", async(req, res)=>{
-    if (req.body.userId === req.params.id || req.body.isAdmin) {
+router.delete("/:id", verifyJWT, async(req, res)=>{
+    if (req.user === req.params.id ) {
 
         try {
             const user = await User.findByIdAndDelete(req.params.id);
